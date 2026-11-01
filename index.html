@@ -485,7 +485,8 @@
     </div>
 
     <!-- Application Script -->
-     // Start completely blank for the user
+     <script>
+    // Start completely blank for the user
     let trades = JSON.parse(localStorage.getItem('penfold_trades')) || [];
 
     // Dynamically set calendar to current real-world date
@@ -773,6 +774,7 @@
     refreshAll();
     calculateQuickLot();
     runAdvancedCalculator();
+       </script>  
 
 </body>
 </html>
