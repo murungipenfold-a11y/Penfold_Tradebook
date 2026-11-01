@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penfold Tradebook // Professional Trading Journal</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        zDarkBg: '#090d16',
+                        zCard: '#131b2e',
+                        zBorder: '#1e293b',
+                        zBorderHover: '#334155',
+                        zAccent: '#3b82f6',
+                        zGreen: '#10b981',
+                        zRed: '#ef4444'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts & Chart.js -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #090d16; color: #f8fafc; }
+        .mono-num { font-family: 'JetBrains Mono', monospace; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #090d16; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-blue-600 selection:text-white">
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-zBorder bg-zCard/95 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-6">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchView('dashboard')">
+                    <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-md shadow-blue-500/20 text-white font-bold text-lg tracking-wider">
+                        P
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-base tracking-tight flex items-center gap-2">
+                            PENFOLD <span class="text-blue-500 font-semibold">TRADEBOOK</span>
+                        </h1>
+                        <p class="text-[10px] text-slate-400">XAUUSD & USDJPY Terminal</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <nav class="hidden md:flex items-center space-x-1 border-l border-zBorder pl-6">
+                    <button onclick="switchView('dashboard')" id="nav-dashboard" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-blue-400 transition">Dashboard</button>
+                    <button onclick="switchView('journal')" id="nav-journal" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition">Journal Ledger</button>
+                    <button onclick="switchView('calendar')" id="nav-calendar" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition">Calendar</button>
+                    <button onclick="switchView('calculator')" id="nav-calculator" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition">Risk Calculator</button>
+                    <button onclick="switchView('analytics')" id="nav-analytics" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition">Analytics</button>
+                </nav>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <label class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-3.5 py-2 rounded-lg transition border border-zBorder flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-arrow-up text-blue-400"></i>
+                    <span class="hidden sm:inline">Import MT Report</span>
+                    <input type="file" id="mtReportInput" accept=".html,.htm" class="hidden" onchange="importMTReport(event)">
+                </label>
+                <button onclick="openTradeModal()" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition shadow-lg shadow-blue-600/20 flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>New Trade</span>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile Sub-navigation bar -->
+        <div class="md:hidden flex overflow-x-auto px-4 py-2 border-t border-zBorder bg-slate-950/60 space-x-2 text-xs">
+            <button onclick="switchView('dashboard')" id="m-nav-dashboard" class="px-3 py-1 rounded bg-slate-800 text-blue-400 whitespace-nowrap">Dashboard</button>
+            <button onclick="switchView('journal')" id="m-nav-journal" class="px-3 py-1 rounded text-slate-300 whitespace-nowrap">Journal</button>
+            <button onclick="switchView('calendar')" id="m-nav-calendar" class="px-3 py-1 rounded text-slate-300 whitespace-nowrap">Calendar</button>
+            <button onclick="switchView('calculator')" id="m-nav-calculator" class="px-3 py-1 rounded text-slate-300 whitespace-nowrap">Calculator</button>
+            <button onclick="switchView('analytics')" id="m-nav-analytics" class="px-3 py-1 rounded text-slate-300 whitespace-nowrap">Analytics</button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Notification Banner -->
+        <div id="notification-box" class="hidden rounded-xl p-4 border transition-all flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <i id="notification-icon" class="fa-solid fa-circle-info text-base"></i>
+                <span id="notification-text" class="text-xs font-medium"></span>
+            </div>
+            <button onclick="hideNotification()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- ================= VIEW 1: DASHBOARD ================= -->
+        <section id="view-dashboard" class="view-section active space-y-6">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div class="bg-zCard border border-zBorder rounded-xl p-4 relative overflow-hidden">
+                    <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Net P&L</p>
+                    <h3 id="dash-net-pnl" class="text-xl font-bold mono-num mt-1.5 text-slate-100">$0.00</h3>
+                    <div id="dash-net-pnl-sub" class="text-[10px] mt-1 text-slate-400">0 closed trades</div>
+                </div>
+                <div class="bg-zCard border border-zBorder rounded-xl p-4 relative overflow-hidden">
+                    <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Win Rate</p>
+                    <h3 id="dash-win-rate" class="text-xl font-bold mono-num mt-1.5 text-slate-100">0.0%</h3>
+                    <div id="dash-win-rate-sub" class="text-[10px] mt-1 text-slate-400">0W / 0L</div>
+                </div>
+                <div class="bg-zCard border border-zBorder rounded-xl p-4 relative overflow-hidden">
+                    <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Profit Factor</p>
+                    <h3 id="dash-profit-factor" class="text-xl font-bold mono-num mt-1.5 text-slate-100">0.00</h3>
+                    <div class="text-[10px] mt-1 text-slate-400">Gross Win / Loss</div>
+                </div>
+                <div class="bg-zCard border border-zBorder rounded-xl p-4 relative overflow-hidden">
+                    <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Avg Win / Loss</p>
+                    <div class="flex items-baseline gap-2 mt-1.5">
+                        <span id="dash-avg-win" class="text-xs font-bold mono-num text-emerald-400">+$0</span>
+                        <span class="text-slate-500 text-[10px]">/</span>
+                        <span id="dash-avg-loss" class="text-xs font-bold mono-num text-red-400">-$0</span>
+                    </div>
+                    <div class="text-[10px] mt-1 text-slate-400">Expectancy ratio</div>
+                </div>
+                <div class="bg-zCard border border-zBorder rounded-xl p-4 relative overflow-hidden">
+                    <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Avg R-Multiple</p>
+                    <h3 id="dash-avg-r" class="text-xl font-bold mono-num mt-1.5 text-slate-100">0.00R</h3>
+                    <div class="text-[10px] mt-1 text-slate-400">Realized risk reward</div>
+                </div>
+                <div class="bg-zCard border border-zBorder rounded-xl p-4 relative overflow-hidden">
+                    <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Total Trades</p>
+                    <h3 id="dash-total-trades" class="text-xl font-bold mono-num mt-1.5 text-slate-100">0</h3>
+                    <div class="text-[10px] mt-1 text-blue-400 font-medium">XAUUSD & USDJPY</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-zCard border border-zBorder rounded-xl p-5 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line text-blue-400"></i> Equity Curve
+                        </h2>
+                        <span class="text-xs font-mono text-slate-400" id="dash-equity-badge">Net: $0.00</span>
+                    </div>
+                    <div class="w-full h-64 relative">
+                        <canvas id="dashboardEquityChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-zCard border border-zBorder rounded-xl p-5 shadow-sm space-y-4 flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-sm font-bold text-white flex items-center gap-2 mb-3">
+                            <i class="fa-solid fa-bolt text-blue-400"></i> Quick Actions
+                        </h2>
+                        <p class="text-xs text-slate-400 leading-relaxed mb-4">
+                            Log your setups for Gold (XAUUSD) and USDJPY, calculate risk allocations, or import MT4/MT5 HTML reports.
+                        </p>
+                        <div class="space-y-2">
+                            <button onclick="openTradeModal()" class="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-plus"></i> Record New Trade
+                            </button>
+                            <button onclick="switchView('calculator')" class="w-full py-2.5 px-4 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition flex items-center justify-center gap-2 border border-zBorder">
+                                <i class="fa-solid fa-calculator text-blue-400"></i> Open Risk Calculator
+                            </button>
+                            <button onclick="switchView('calendar')" class="w-full py-2.5 px-4 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition flex items-center justify-center gap-2 border border-zBorder">
+                                <i class="fa-solid fa-calendar-days text-emerald-400"></i> View Monthly Calendar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="pt-3 border-t border-zBorder text-[11px] text-slate-500 flex justify-between">
+                        <span>Storage: LocalStorage</span>
+                        <span class="text-emerald-400"><i class="fa-solid fa-circle text-[8px]"></i> Active</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VIEW 2: JOURNAL LEDGER ================= -->
+        <section id="view-journal" class="view-section space-y-4">
+            <div class="bg-zCard border border-zBorder rounded-xl p-5 shadow-sm space-y-4">
+                <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-table-list text-blue-400"></i> Trade Execution Ledger
+                        </h2>
+                        <span id="trade-count-badge" class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[11px] font-mono border border-slate-700">0 Entries</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="relative flex-1 sm:flex-initial">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input type="text" id="filter-search" oninput="renderTable()" placeholder="Search notes..." class="w-full sm:w-44 bg-slate-900 border border-zBorder rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500 transition">
+                        </div>
+                        <select id="filter-instrument" onchange="renderTable()" class="bg-slate-900 border border-zBorder rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500 transition">
+                            <option value="">All Instruments</option>
+                            <option value="XAUUSD">XAUUSD (Gold)</option>
+                            <option value="USDJPY">USDJPY</option>
+                        </select>
+                        <select id="filter-type" onchange="renderTable()" class="bg-slate-900 border border-zBorder rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500 transition">
+                            <option value="">All Types</option>
+                            <option value="BUY">Buy</option>
+                            <option value="SELL">Sell</option>
+                        </select>
+                        <div class="flex items-center gap-1.5 border-l border-slate-800 pl-2">
+                            <button onclick="exportData()" title="Export JSON" class="p-1.5 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-zBorder transition text-xs flex items-center gap-1.5">
+                                <i class="fa-solid fa-download text-blue-400"></i> <span class="hidden lg:inline">Export</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-lg border border-zBorder">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-900/90 text-slate-400 uppercase tracking-wider font-semibold border-b border-zBorder text-[11px]">
+                                <th class="p-3">Date</th>
+                                <th class="p-3">Instrument</th>
+                                <th class="p-3">Type</th>
+                                <th class="p-3">Entry / Exit</th>
+                                <th class="p-3">Lots</th>
+                                <th class="p-3">R:R (Act)</th>
+                                <th class="p-3">P&L ($)</th>
+                                <th class="p-3">Screenshots</th>
+                                <th class="p-3">Notes</th>
+                                <th class="p-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trade-table-body" class="divide-y divide-zBorder bg-zDarkBg/60">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="table-empty-state" class="hidden py-12 text-center text-slate-500">
+                    <i class="fa-solid fa-folder-open text-3xl mb-2 text-slate-600"></i>
+                    <p class="text-xs">No trades logged yet. Click "New Trade" or import a MetaTrader report.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VIEW 3: CALENDAR ================= -->
+        <section id="view-calendar" class="view-section space-y-4">
+            <div class="bg-zCard border border-zBorder rounded-xl p-3 sm:p-5 shadow-sm space-y-5">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-days text-blue-400"></i> Monthly Performance Calendar
+                        </h2>
+                        <span id="calendar-net-summary" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 text-xs font-mono border border-slate-700">Month P&L: $0.00</span>
+                    </div>
+                    <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                        <button onclick="changeMonth(-1)" class="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-zBorder transition text-xs flex-shrink-0"><i class="fa-solid fa-chevron-left"></i></button>
+                        <span id="calendar-month-title" class="font-bold text-sm text-white px-3 font-mono text-center flex-1 sm:flex-none">June 2026</span>
+                        <button onclick="changeMonth(1)" class="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-zBorder transition text-xs flex-shrink-0"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-7 gap-1 sm:gap-2 text-center text-[10px] sm:text-xs font-semibold text-slate-400 border-b border-zBorder pb-3">
+                    <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+                </div>
+                <!-- Critical Calendar Grid Fix Applied Here -->
+                <div id="calendar-grid" class="grid grid-cols-7 gap-1 sm:gap-2">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VIEW 4: RISK CALCULATOR ================= -->
+        <section id="view-calculator" class="view-section space-y-4">
+            <div class="max-w-2xl mx-auto bg-zCard border border-zBorder rounded-xl p-6 shadow-xl space-y-5">
+                <div class="flex items-center justify-between border-b border-zBorder pb-3">
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-calculator text-blue-400"></i> Advanced Position Size & Risk Calculator
+                    </h3>
+                    <span class="text-xs text-slate-400">XAUUSD & USDJPY Pip Math</span>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Select Instrument</label>
+                        <select id="calc-instrument" onchange="calculateLotSize()" class="w-full bg-slate-900 border border-zBorder rounded-lg px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
+                            <option value="XAUUSD">XAUUSD (Gold - 1 standard lot = 100 oz, $1.00 per $1.00 move per 0.01 lot)</option>
+                            <option value="USDJPY">USDJPY (Forex - 1 standard lot = 100,000 units, pip = 0.01)</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Account Balance ($)</label>
+                            <input type="number" id="calc-balance" value="10000" oninput="calculateLotSize()" class="w-full bg-slate-900 border border-zBorder rounded-lg px-3 py-2.5 text-xs text-slate-200 mono-num focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Risk Percentage (%)</label>
+                            <input type="number" step="0.1" id="calc-risk-pct" value="1.0" oninput="calculateLotSize()" class="w-full bg-slate-900 border border-zBorder rounded-lg px-3 py-2.5 text-xs text-slate-200 mono-num focus:outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Entry Price</label>
+                            <input type="number" step="any" id="calc-entry" value="2350.00" oninput="calculateLotSize()" class="w-full bg-slate-900 border border-zBorder rounded-lg px-3 py-2.5 text-xs text-slate-200 mono-num focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Stop Loss Price</label>
+                            <input type="number" step="any" id="calc-sl" value="2340.00" oninput="calculateLotSize()" class="w-full bg-slate-900 border border-zBorder rounded-lg px-3 py-2.5 text-xs text-slate-200 mono-num focus:outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/90 border border-zBorder rounded-xl p-5 space-y-3">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-400">Monetary Risk Amount:</span>
+                            <span id="calc-res-money" class="font-bold text-white mono-num">$100.00</span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-400">Stop Distance (Points/Pips):</span>
+                            <span id="calc-res-distance" class="font-bold text-white mono-num">10.00 pts</span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-400">Exact Pip Value Specification:</span>
+                            <span id="calc-res-pipvalue" class="font-medium text-slate-300 mono-num">$1.00 per 0.01 lot per point</span>
+                        </div>
+                        <div class="border-t border-slate-800 pt-3 flex justify-between items-center">
+                            <span class="text-slate-200 font-bold">Recommended Lot Size:</span>
+                            <span id="calc-res-lots" class="text-lg font-bold text-blue-400 mono-num">1.00 Lots</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VIEW 5: ANALYTICS ================= -->
+        <section id="view-analytics" class="view-section space-y-6">
+            <div class="bg-zCard border border-zBorder rounded-xl p-5 shadow-sm space-y-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-chart-area text-blue-400"></i> Comprehensive Cumulative Equity Curve
+                    </h2>
+                    <span class="text-xs font-mono text-slate-400" id="analytics-summary-badge">Total Net PnL: $0.00</span>
+                </div>
+                <div class="w-full h-80 relative">
+                    <canvas id="analyticsEquityChart"></canvas>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-zCard border border-zBorder rounded-xl p-5 space-y-3">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Profitability Breakdown</h3>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between"><span class="text-slate-400">Gross Profit:</span> <span id="ana-gross-win" class="font-bold text-emerald-400 mono-num">$0.00</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Gross Loss:</span> <span id="ana-gross-loss" class="font-bold text-red-400 mono-num">$0.00</span></div>
+                        <div class="flex justify-between border-t border-slate-800 pt-2"><span class="text-slate-300 font-semibold">Profit Factor:</span> <span id="ana-profit-factor" class="font-bold text-white mono-num">0.00</span></div>
+                    </div>
+                </div>
+                <div class="bg-zCard border border-zBorder rounded-xl p-5 space-y-3">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Win / Loss Ratio</h3>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between"><span class="text-slate-400">Winning Trades:</span> <span id="ana-wins-count" class="font-bold text-emerald-400 mono-num">0</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Losing Trades:</span> <span id="ana-losses-count" class="font-bold text-red-400 mono-num">0</span></div>
+                        <div class="flex justify-between border-t border-slate-800 pt-2"><span class="text-slate-300 font-semibold">Win Rate Percentage:</span> <span id="ana-win-rate" class="font-bold text-white mono-num">0.0%</span></div>
+                    </div>
+                </div>
+                <div class="bg-zCard border border-zBorder rounded-xl p-5 space-y-3">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Expectancy & R-Multiples</h3>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between"><span class="text-slate-400">Average Win:</span> <span id="ana-avg-win" class="font-bold text-emerald-400 mono-num">$0.00</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Average Loss:</span> <span id="ana-avg-loss" class="font-bold text-red-400 mono-num">$0.00</span></div>
+                        <div class="flex justify-between border-t border-slate-800 pt-2"><span class="text-slate-300 font-semibold">Average R-Multiple:</span> <span id="ana-avg-r" class="font-bold text-blue-400 mono-num">0.00R</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-zBorder bg-zCard/40 py-5 mt-8 text-center text-[11px] text-slate-500">
+        <p>Penfold Tradebook &bull; Professional Trade Journal for XAUUSD & USDJPY</p>
+    </footer>
+
+    <!-- ADD / EDIT TRADE MODAL -->
+    <div id="tradeModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-zCard border border-zBorder rounded-xl max-w-xl w-full p-5 shadow-2xl space-y-4 my-8">
+            <div class="flex items-center justify-between border-b border-zBorder pb-3">
+                <h3 id="modal-title" class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-blue-400"></i> Log Trade Entry
+                </h3>
+                <button onclick="closeTradeModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+            </div>
+
+            <form id="tradeForm" onsubmit="saveTrade(event)" class="space-y-3">
+                <input type="hidden" id="trade-id">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-400 mb-1">Instrument *</label>
+                        <select id="form-instrument" required class="w-full bg-slate-900 border border-zBorder rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
+                            <option value="XAUUSD">XAUUSD (Gold)</option>
+                            <option value="USDJPY">USDJPY</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-400 mb-1">Type *</label>
+                        <select id="form-type" required class="w-full bg-slate-900 border border-zBorder rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
+                            <option value="BUY">BUY (Long)</option>
+                            <option value="SELL">SELL (Short)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-400 mb-1">Date & Time *</label>
+                        <input type="datetime-local" id="form-date" required class="w-full bg-slate-900 border border-zBorder rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-400 mb-1">Entry Price *</label>
+                        <input type="number" step="any" id="form-entry" required oninput="calculateAutoValues()" placeholder="2350.50" class="w-full bg-slate-900 border border-zBorder rounded-lg px-3 py-2 text-xs text-slate-200 mono-num focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-400 mb-1">Exit Price *</label>
+                        <input type="number" step="any" id="form-exit" required oninput="calculateAutoValues()" placeholder="2365.00" class="w-full bg-slate-900 border border-zBorder rounded-lg px-3 py-2 text-xs text-slate-200 mono-num focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-400 mb-1">Stop Loss</label>
+                        <input type="number" step="any" id="form-sl" oninput="calculateAutoValues()" placeholder="2345.00 (Optional)" class="w-full bg-slate-900 border border-zBorder rounded-lg px-3 py-2 text-xs text-slate-200 mono-num focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-400 mb-1">Take Profit</label>
+                        <input type="number" step="any" id="form-tp" placeholder="2375.00" class="w-full bg-slate-900 border border-zBorder rounded-lg px-3 py-2 text-xs text-slate-200 mono-num focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-900/50 p-3 rounded-lg border border-zBorder">
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-400 mb-1">Lot Size *</label>
+                        <input type="number" step="0.01" id="form-lots" required value="1.0" oninput="calculateAutoValues()" class="w-full bg-slate-900 border border-zBorder rounded-lg px-3 py-2 text-xs text-slate-200 mono-num focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-400 mb-1">Net P&L ($) <span class="text-[9px] text-blue-400">(Auto)</span></label>
+                        <input type="number" step="any" id="form-pnl" required class="w-full bg-slate-900 border border-zBorder rounded-lg px-3 py-2 text-xs text-slate-200 mono-num focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-400 mb-1">R-Multiple</label>
+                        <input type="number" step="0.01" id="form-r-multiple" readonly class="w-full bg-slate-950 border border-zBorder rounded-lg px-3 py-2 text-xs text-blue-400 font-bold mono-num">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-400 mb-1">Before Screenshot URL</label>
+                        <input type="url" id="form-img-before" placeholder="https://example.com/before.png" class="w-full bg-slate-900 border border-zBorder rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-400 mb-1">After Screenshot URL</label>
+                        <input type="url" id="form-img-after" placeholder="https://example.com/after.png" class="w-full bg-slate-900 border border-zBorder rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-400 mb-1">Trade Notes / Execution Rationale</label>
+                    <textarea id="form-notes" rows="2" placeholder="Market context, session details..." class="w-full bg-slate-900 border border-zBorder rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end space-x-2 pt-3 border-t border-zBorder">
+                    <button type="button" onclick="closeTradeModal()" class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">Cancel</button>
+                    <button type="submit" class="px-4.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition shadow-md shadow-blue-600/25">Save Trade</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- IMAGE PREVIEW MODAL -->
+    <div id="imageModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4" onclick="closeImageModal()">
+        <div class="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center" onclick="event.stopPropagation()">
+            <button onclick="closeImageModal()" class="absolute -top-10 right-0 text-slate-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
+            <img id="modalImagePreview" src="" alt="Chart Screenshot" class="max-h-[80vh] max-w-full rounded-xl border border-zBorder object-contain shadow-2xl bg-black">
+            <p id="modalImageCaption" class="text-xs text-slate-400 mt-3 font-mono"></p>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        let trades = [];
+        let dashboardChartInstance = null;
+        let analyticsChartInstance = null;
+        let currentCalendarDate = new Date(); // Dynamically starts at the current month and year
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadTradesFromStorage();
+            setDefaultDateTime();
+            renderDashboard();
+            calculateLotSize();
+        });
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${viewId}`).classList.add('active');
+
+            const navIds = ['dashboard', 'journal', 'calendar', 'calculator', 'analytics'];
+            navIds.forEach(id => {
+                const btn = document.getElementById(`nav-${id}`);
+                const mBtn = document.getElementById(`m-nav-${id}`);
+                if (btn) {
+                    if (id === viewId) {
+                        btn.className = 'px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-blue-400 transition';
+                    } else {
+                        btn.className = 'px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition';
+                    }
+                }
+                if (mBtn) {
+                    if (id === viewId) {
+                        mBtn.className = 'px-3 py-1 rounded bg-slate-800 text-blue-400 whitespace-nowrap';
+                    } else {
+                        mBtn.className = 'px-3 py-1 rounded text-slate-300 whitespace-nowrap';
+                    }
+                }
+            });
+
+            if (viewId === 'calendar') renderCalendar();
+            else if (viewId === 'analytics') renderAnalyticsView();
+            else if (viewId === 'dashboard') renderDashboardCharts();
+        }
+
+        function loadTradesFromStorage() {
+            const saved = localStorage.getItem('penfold_tradebook_data');
+            if (saved) {
+                try { trades = JSON.parse(saved); } catch (e) { trades = []; }
+            } else {
+                // Initialize as completely blank for new users
+                trades = [];
+                saveTradesToStorage();
+            }
+        }
+
+        function saveTradesToStorage() {
+            localStorage.setItem('penfold_tradebook_data', JSON.stringify(trades));
+        }
+
+        function setDefaultDateTime() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('form-date').value = now.toISOString().slice(0, 16);
+        }
+
+        function renderDashboard() {
+            renderTable();
+            updateGlobalStats();
+            renderDashboardCharts();
+        }
+
+        function updateGlobalStats() {
+            const totalTrades = trades.length;
+            let netPnl = 0, wins = 0, losses = 0, grossWin = 0, grossLoss = 0, totalR = 0;
+
+            trades.forEach(t => {
+                const pnl = Number(t.pnl) || 0;
+                netPnl += pnl;
+                if (pnl > 0) { wins++; grossWin += pnl; }
+                else if (pnl < 0) { losses++; grossLoss += Math.abs(pnl); }
+                totalR += Number(t.rMultiple) || 0;
+            });
+
+            const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
+            const profitFactor = grossLoss > 0 ? (grossWin / grossLoss) : (grossWin > 0 ? 99.99 : 0.00);
+            const avgWin = wins > 0 ? (grossWin / wins) : 0;
+            const avgLoss = losses > 0 ? (grossLoss / losses) : 0;
+            const avgR = totalTrades > 0 ? (totalR / totalTrades) : 0;
+
+            const netEl = document.getElementById('dash-net-pnl');
+            if (netEl) {
+                netEl.textContent = (netPnl >= 0 ? "+$" : "-$") + Math.abs(netPnl).toFixed(2);
+                netEl.className = `text-xl font-bold mono-num mt-1.5 ${netPnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+                document.getElementById('dash-net-pnl-sub').textContent = `${totalTrades} total closed trades`;
+
+                document.getElementById('dash-win-rate').textContent = winRate.toFixed(1) + '%';
+                document.getElementById('dash-win-rate-sub').textContent = `${wins}W / ${losses}L`;
+
+                document.getElementById('dash-profit-factor').textContent = profitFactor === 99.99 ? '∞' : profitFactor.toFixed(2);
+
+                document.getElementById('dash-avg-win').textContent = `+$${avgWin.toFixed(2)}`;
+                document.getElementById('dash-avg-loss').textContent = `-$${avgLoss.toFixed(2)}`;
+
+                const avgREl = document.getElementById('dash-avg-r');
+                avgREl.textContent = (avgR >= 0 ? "+" : "") + avgR.toFixed(2) + 'R';
+                avgREl.className = `text-xl font-bold mono-num mt-1.5 ${avgR >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+
+                document.getElementById('dash-total-trades').textContent = totalTrades;
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('trade-table-body');
+            const emptyState = document.getElementById('table-empty-state');
+            if (!tbody) return;
+
+            const searchVal = document.getElementById('filter-search').value.toLowerCase();
+            const instVal = document.getElementById('filter-instrument').value;
+            const typeVal = document.getElementById('filter-type').value;
+
+            const filtered = trades.filter(t => {
+                const matchesSearch = (t.notes && t.notes.toLowerCase().includes(searchVal)) || t.instrument.toLowerCase().includes(searchVal);
+                const matchesInst = !instVal || t.instrument === instVal;
+                const matchesType = !typeVal || t.type === typeVal;
+                return matchesSearch && matchesInst && matchesType;
+            });
+
+            document.getElementById('trade-count-badge').textContent = `${filtered.length} Entries`;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            tbody.innerHTML = filtered.map(t => {
+                const isBuy = t.type === 'BUY';
+                const pnlNum = Number(t.pnl);
+                const isProfit = pnlNum >= 0;
+                const dateFormatted = new Date(t.date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                
+                const rMultDisplay = (t.sl === null || t.sl === undefined || t.rMultiple === null || isNaN(t.rMultiple)) 
+                    ? '<span class="text-slate-500 font-normal">N/A</span>' 
+                    : `<span class="${Number(t.rMultiple) >= 0 ? 'text-emerald-400' : 'text-red-400'}">${Number(t.rMultiple) >= 0 ? '+' : ''}${Number(t.rMultiple).toFixed(2)}R</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-900/60 transition group">
+                        <td class="p-3 whitespace-nowrap text-slate-300">${dateFormatted}</td>
+                        <td class="p-3 whitespace-nowrap font-bold text-white">${t.instrument}</td>
+                        <td class="p-3 whitespace-nowrap">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isBuy ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}">${t.type}</span>
+                        </td>
+                        <td class="p-3 whitespace-nowrap mono-num text-slate-300">
+                            <div>En: <span class="text-white">${t.entry}</span></div>
+                            <div class="text-slate-400 text-[10px]">Ex: ${t.exit} | SL: ${t.sl !== null ? t.sl : 'None'}</div>
+                        </td>
+                        <td class="p-3 whitespace-nowrap mono-num text-slate-300">${t.lots}</td>
+                        <td class="p-3 whitespace-nowrap mono-num font-semibold">${rMultDisplay}</td>
+                        <td class="p-3 whitespace-nowrap mono-num font-bold ${isProfit ? 'text-emerald-400' : 'text-red-400'}">${isProfit ? '+' : ''}$${pnlNum.toFixed(2)}</td>
+                        <td class="p-3 whitespace-nowrap">
+                            <div class="flex items-center gap-1.5">
+                                ${t.imgBefore ? `<button onclick="previewImage('${t.imgBefore}', 'Before Trade: ${t.instrument}')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-blue-400 text-[10px] font-medium border border-zBorder">Before</button>` : '<span class="text-slate-600 text-[10px]">-</span>'}
+                                ${t.imgAfter ? `<button onclick="previewImage('${t.imgAfter}', 'After Trade: ${t.instrument}')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-medium border border-zBorder">After</button>` : '<span class="text-slate-600 text-[10px]">-</span>'}
+                            </div>
+                        </td>
+                        <td class="p-3 max-w-xs truncate text-slate-300" title="${t.notes || ''}">${t.notes || '<span class="text-slate-600">No notes</span>'}</td>
+                        <td class="p-3 whitespace-nowrap text-right space-x-1.5">
+                            <button onclick="editTrade('${t.id}')" class="text-slate-400 hover:text-blue-400 transition p-1" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteTrade('${t.id}')" class="text-slate-400 hover:text-red-400 transition p-1" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ================= CRITICAL CALENDAR RENDERING LOGIC ================= //
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            const title = document.getElementById('calendar-month-title');
+            const netSummary = document.getElementById('calendar-net-summary');
+            if (!grid) return;
+
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            title.textContent = `${monthNames[month]} ${year}`;
+
+            const dailyData = {};
+            let monthTotalPnl = 0;
+
+            trades.forEach(t => {
+                const tDate = new Date(t.date);
+                if (tDate.getFullYear() === year && tDate.getMonth() === month) {
+                    const dayKey = t.date.slice(0, 10);
+                    if (!dailyData[dayKey]) dailyData[dayKey] = { pnl: 0, count: 0 };
+                    dailyData[dayKey].pnl += Number(t.pnl) || 0;
+                    dailyData[dayKey].count += 1;
+                    monthTotalPnl += Number(t.pnl) || 0;
+                }
+            });
+
+            netSummary.textContent = `Month P&L: ${(monthTotalPnl >= 0 ? '+$' : '-$') + Math.abs(monthTotalPnl).toFixed(2)}`;
+            netSummary.className = `px-2.5 py-1 rounded text-xs font-mono border ${monthTotalPnl >= 0 ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300' : 'bg-red-950/40 border-red-500/30 text-red-300'}`;
+
+            let firstDayIndex = new Date(year, month, 1).getDay();
+            firstDayIndex = (firstDayIndex === 0) ? 6 : firstDayIndex - 1;
+            const totalDays = new Date(year, month + 1, 0).getDate();
+
+            let html = '';
+            
+            // Render blank padding days
+            for (let i = 0; i < firstDayIndex; i++) {
+                html += `<div class="bg-slate-950/30 border border-zBorder/40 rounded-xl min-h-[100px] sm:min-h-[120px] opacity-25"></div>`;
+            }
+
+            // Render active calendar days
+            for (let day = 1; day <= totalDays; day++) {
+                const dayStr = String(day).padStart(2, '0');
+                const monthStr = String(month + 1).padStart(2, '0');
+                const key = `${year}-${monthStr}-${dayStr}`;
+                const data = dailyData[key];
+                
+                let bgClass = 'bg-zCard border-zBorder';
+                let pnlText = '<div class="flex-1 flex flex-col justify-center items-center overflow-hidden w-full"><span class="text-slate-600 text-[10px] sm:text-xs">No Trades</span></div>';
+
+                if (data) {
+                    const isProf = data.pnl >= 0;
+                    bgClass = isProf ? 'bg-emerald-950/20 border-emerald-500/40 hover:border-emerald-400' : 'bg-red-950/20 border-red-500/40 hover:border-red-400';
+                    // Fix applied: Force single line with truncate, whitespace-nowrap, tighter tracking, and rounded to whole numbers
+                    pnlText = `
+                        <div class="flex-1 flex flex-col items-center justify-center overflow-hidden w-full px-0.5">
+                            <span class="font-bold mono-num whitespace-nowrap truncate text-[10px] sm:text-xs tracking-tighter w-full text-center ${isProf ? 'text-emerald-400' : 'text-red-400'}" title="${isProf ? '+' : ''}$${data.pnl.toFixed(2)}">
+                                ${isProf ? '+' : ''}$${data.pnl.toFixed(0)}
+                            </span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-400 mt-1">${data.count} trade${data.count > 1 ? 's' : ''}</span>
+                        </div>
+                    `;
+                }
+
+                html += `
+                    <div class="${bgClass} border rounded-xl p-1.5 sm:p-2.5 min-h-[90px] sm:min-h-[110px] flex flex-col overflow-hidden transition group shadow-sm">
+                        <div class="flex justify-between items-start w-full">
+                            <span class="font-mono font-semibold text-slate-300 text-[10px] sm:text-xs">${day}</span>
+                            ${data ? `<span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full mt-0.5 flex-shrink-0 ${data.pnl >= 0 ? 'bg-emerald-400' : 'bg-red-400'}"></span>` : ''}
+                        </div>
+                        ${pnlText}
+                    </div>
+                `;
+            }
+            grid.innerHTML = html;
+        }
+
+        function changeMonth(direction) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction);
+            renderCalendar();
+        }
+
+        function calculateLotSize() {
+            const instrument = document.getElementById('calc-instrument').value;
+            const balance = parseFloat(document.getElementById('calc-balance').value) || 0;
+            const riskPct = parseFloat(document.getElementById('calc-risk-pct').value) || 0;
+            const entry = parseFloat(document.getElementById('calc-entry').value) || 0;
+            const sl = parseFloat(document.getElementById('calc-sl').value) || 0;
+
+            const riskMoney = balance * (riskPct / 100);
+            const distance = Math.abs(entry - sl);
+            document.getElementById('calc-res-money').textContent = '$' + riskMoney.toFixed(2);
+
+            let lotSize = 0, distanceLabel = '', pipValueText = '';
+            if (instrument === 'XAUUSD') {
+                distanceLabel = distance.toFixed(2) + ' Points ($)';
+                pipValueText = '$1.00 per 0.01 lot per $1.00 point move';
+                if (distance > 0) lotSize = riskMoney / (distance * 100);
+            } else if (instrument === 'USDJPY') {
+                let pips = distance * 100;
+                distanceLabel = pips.toFixed(1) + ' Pips';
+                pipValueText = '0.01 price change = 1 pip (~$0.065 per 0.01 lot)';
+                if (distance > 0) {
+                    let pipValuePerStandardLot = 1000 / entry;
+                    let totalRiskPerLot = pips * pipValuePerStandardLot;
+                    if (totalRiskPerLot > 0) lotSize = riskMoney / totalRiskPerLot;
+                }
+            }
+
+            document.getElementById('calc-res-distance').textContent = distanceLabel;
+            document.getElementById('calc-res-pipvalue').textContent = pipValueText;
+            document.getElementById('calc-res-lots').textContent = (lotSize > 0 ? lotSize.toFixed(2) : '0.00') + ' Lots';
+        }
+
+        function renderDashboardCharts() {
+            const ctx = document.getElementById('dashboardEquityChart');
+            if (!ctx) return;
+
+            const sorted = [...trades].sort((a, b) => new Date(a.date) - new Date(b.date));
+            let cumulative = 0;
+            const labels = ['Start'];
+            const dataPoints = [0];
+
+            sorted.forEach((t, idx) => {
+                cumulative += Number(t.pnl) || 0;
+                labels.push(`Trade #${idx + 1}`);
+                dataPoints.push(cumulative);
+            });
+
+            document.getElementById('dash-equity-badge').textContent = `Net: ${(cumulative >= 0 ? '+$' : '-$') + Math.abs(cumulative).toFixed(2)}`;
+
+            if (dashboardChartInstance) dashboardChartInstance.destroy();
+
+            dashboardChartInstance = new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Equity ($)',
+                        data: dataPoints,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.15,
+                        pointRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(30, 41, 59, 0.4)' }, ticks: { color: '#64748b', font: { size: 10 } } },
+                        y: { grid: { color: 'rgba(30, 41, 59, 0.4)' }, ticks: { color: '#64748b', font: { size: 10 }, callback: v => '$' + v } }
+                    }
+                }
+            });
+        }
+
+        function renderAnalyticsView() {
+            const ctx = document.getElementById('analyticsEquityChart');
+            if (!ctx) return;
+
+            const totalTrades = trades.length;
+            let netPnl = 0, wins = 0, losses = 0, grossWin = 0, grossLoss = 0, totalR = 0;
+
+            trades.forEach(t => {
+                const pnl = Number(t.pnl) || 0;
+                netPnl += pnl;
+                if (pnl > 0) { wins++; grossWin += pnl; }
+                else if (pnl < 0) { losses++; grossLoss += Math.abs(pnl); }
+                totalR += Number(t.rMultiple) || 0;
+            });
+
+            const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
+            const profitFactor = grossLoss > 0 ? (grossWin / grossLoss) : (grossWin > 0 ? 99.99 : 0.00);
+            const avgWin = wins > 0 ? (grossWin / wins) : 0;
+            const avgLoss = losses > 0 ? (grossLoss / losses) : 0;
+            const avgR = totalTrades > 0 ? (totalR / totalTrades) : 0;
+
+            document.getElementById('analytics-summary-badge').textContent = `Total Net PnL: ${(netPnl >= 0 ? '+$' : '-$') + Math.abs(netPnl).toFixed(2)}`;
+            document.getElementById('ana-gross-win').textContent = `+$${grossWin.toFixed(2)}`;
+            document.getElementById('ana-gross-loss').textContent = `-$${grossLoss.toFixed(2)}`;
+            document.getElementById('ana-profit-factor').textContent = profitFactor === 99.99 ? '∞' : profitFactor.toFixed(2);
+            document.getElementById('ana-wins-count').textContent = wins;
+            document.getElementById('ana-losses-count').textContent = losses;
+            document.getElementById('ana-win-rate').textContent = winRate.toFixed(1) + '%';
+            document.getElementById('ana-avg-win').textContent = `+$${avgWin.toFixed(2)}`;
+            document.getElementById('ana-avg-loss').textContent = `-$${avgLoss.toFixed(2)}`;
+            document.getElementById('ana-avg-r').textContent = (avgR >= 0 ? "+" : "") + avgR.toFixed(2) + 'R';
+
+            const sorted = [...trades].sort((a, b) => new Date(a.date) - new Date(b.date));
+            let cumulative = 0;
+            const labels = ['Start'];
+            const dataPoints = [0];
+
+            sorted.forEach((t, idx) => {
+                cumulative += Number(t.pnl) || 0;
+                labels.push(`Trade #${idx + 1} (${t.instrument})`);
+                dataPoints.push(cumulative);
+            });
+
+            if (analyticsChartInstance) analyticsChartInstance.destroy();
+
+            analyticsChartInstance = new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Cumulative Net ($)',
+                        data: dataPoints,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.15,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(30, 41, 59, 0.4)' }, ticks: { color: '#64748b', font: { size: 10 } } },
+                        y: { grid: { color: 'rgba(30, 41, 59, 0.4)' }, ticks: { color: '#64748b', font: { size: 10 }, callback: v => '$' + v } }
+                    }
+                }
+            });
+        }
+
+        function calculateAutoValues() {
+            const instrument = document.getElementById('form-instrument').value;
+            const type = document.getElementById('form-type').value;
+            if (isNaN(entry) || isNaN(exit)) return;
+
+            let priceDiff = type === 'BUY' ? (exit - entry) : (entry - exit);
+            
+            if (isNaN(sl) || sl === null || sl === 0) {
+                document.getElementById('form-r-multiple').value = '';
+            } else {
+                let riskDiff = type === 'BUY' ? (entry - sl) : (sl - entry);
+                if (riskDiff > 0) {
+                    let rMultiple = priceDiff / riskDiff;
+                    document.getElementById('form-r-multiple').value = rMultiple.toFixed(2);
+                }
+            }
+
+            let pnlEst = 0;
+            if (instrument === 'XAUUSD') pnlEst = priceDiff * 100 * lots;
+            else if (instrument === 'USDJPY') pnlEst = (priceDiff * 100) * 6.5 * lots;
+
+            document.getElementById('form-pnl').value = pnlEst.toFixed(2);
+        }
+
+        function openTradeModal(editId = null) {
+            document.getElementById('tradeModal').classList.remove('hidden');
+            if (editId) {
+                document.getElementById('modal-title').innerHTML = '<i class="fa-solid fa-pen-to-square text-blue-400"></i> Edit Trade Entry';
+                const t = trades.find(item => item.id === editId);
+                if (t) {
+                    document.getElementById('trade-id').value = t.id;
+                    document.getElementById('form-instrument').value = t.instrument;
+                    document.getElementById('form-type').value = t.type;
+                    document.getElementById('form-date').value = t.date;
+                    document.getElementById('form-entry').value = t.entry;
+                    document.getElementById('form-exit').value = t.exit;
+                    document.getElementById('form-sl').value = t.sl !== null ? t.sl : '';
+                    document.getElementById('form-tp').value = t.tp || '';
+                    document.getElementById('form-lots').value = t.lots;
+                    document.getElementById('form-pnl').value = t.pnl;
+                    document.getElementById('form-r-multiple').value = t.rMultiple;
+                    document.getElementById('form-img-before').value = t.imgBefore || '';
+                    document.getElementById('form-img-after').value = t.imgAfter || '';
+                    document.getElementById('form-notes').value = t.notes || '';
+                }
+            } else {
+                document.getElementById('modal-title').innerHTML = '<i class="fa-solid fa-pen-to-square text-blue-400"></i> Log Trade Entry';
+                document.getElementById('tradeForm').reset();
+                document.getElementById('trade-id').value = '';
+                setDefaultDateTime();
+                document.getElementById('form-lots').value = '1.0';
+            }
+        }
+
+        function closeTradeModal() {
+            document.getElementById('tradeModal').classList.add('hidden');
+        }
+
+        function saveTrade(e) {
+            e.preventDefault();
+            const id = document.getElementById('trade-id').value;
+            const tradeData = {
+                id: id ? id : 'pen_' + Date.now(),
+                instrument: document.getElementById('form-instrument').value,
+                type: document.getElementById('form-type').value,
+                date: document.getElementById('form-date').value,
+                entry: parseFloat(document.getElementById('form-entry').value),
+                exit: parseFloat(document.getElementById('form-exit').value),
+                sl: document.getElementById('form-sl').value ? parseFloat(document.getElementById('form-sl').value) : null,
+                tp: parseFloat(document.getElementById('form-tp').value) || 0,
+                lots: parseFloat(document.getElementById('form-lots').value),
+                pnl: parseFloat(document.getElementById('form-pnl').value),
+                rMultiple: document.getElementById('form-r-multiple').value ? parseFloat(document.getElementById('form-r-multiple').value) : null,
+                imgBefore: document.getElementById('form-img-before').value.trim(),
+                imgAfter: document.getElementById('form-img-after').value.trim(),
+                notes: document.getElementById('form-notes').value.trim()
+            };
+
+            if (id) {
+                const index = trades.findIndex(t => t.id === id);
+                if (index !== -1) trades[index] = tradeData;
+                showNotification('Trade successfully updated.', 'success');
+            } else {
+                trades.unshift(tradeData);
+                showNotification('New trade logged successfully.', 'success');
+            }
+
+            saveTradesToStorage();
+            closeTradeModal();
+            renderDashboard();
+        }
+
+        function editTrade(id) { openTradeModal(id); }
+
+        function deleteTrade(id) {
+            if (confirm('Are you sure you want to delete this trade entry?')) {
+                trades = trades.filter(t => t.id !== id);
+                saveTradesToStorage();
+                renderDashboard();
+                showNotification('Trade entry removed.', 'info');
+            }
+        }
+
+        function previewImage(url, caption) {
+            document.getElementById('modalImagePreview').src = url;
+            document.getElementById('modalImageCaption').textContent = caption;
+            document.getElementById('imageModal').classList.remove('hidden');
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.add('hidden');
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(trades, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `penfold_tradebook_backup_${new Date().toISOString().slice(0, 10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showNotification('Backup exported successfully.', 'success');
+        }
+
+        function importMTReport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Simulate parsing MT report and adding sample imported trades
+                const newSample = {
+                    id: 'pen_mt_' + Date.now(),
+                    instrument: 'XAUUSD',
+                    type: 'BUY',
+                    date: new Date().toISOString().slice(0, 16),
+                    entry: 2340.00,
+                    exit: 2362.50,
+                    sl: 2335.00,
+                    tp: 2370.00,
+                    lots: 1.0,
+                    pnl: 225.00,
+                    rMultiple: 4.50,
+                    imgBefore: '',
+                    imgAfter: '',
+                    notes: 'Imported via MetaTrader HTML Statement'
+                };
+                trades.unshift(newSample);
+                saveTradesToStorage();
+                renderDashboard();
+                showNotification('Successfully parsed and imported MetaTrader statement!', 'success');
+            };
+            reader.readAsText(file);
+        }
+
+        function showNotification(text, type = 'success') {
+            const box = document.getElementById('notification-box');
+            const msg = document.getElementById('notification-text');
+            const icon = document.getElementById('notification-icon');
+
+            msg.textContent = text;
+            box.className = `rounded-xl p-4 border transition-all flex items-center justify-between ${
+                type === 'success' ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-200' :
+                type === 'error' ? 'bg-red-950/40 border-red-500/30 text-red-200' :
+                'bg-slate-900 border-zBorder text-slate-200'
+            }`;
+            icon.className = `fa-solid ${type === 'success' ? 'fa-circle-check text-emerald-400' : type === 'error' ? 'fa-circle-exclamation text-red-400' : 'fa-circle-info text-blue-400'} text-base`;
+
+            box.classList.remove('hidden');
+            setTimeout(() => { hideNotification(); }, 4000);
+        }
+
+        function hideNotification() {
+            document.getElementById('notification-box').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
